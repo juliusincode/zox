@@ -68,15 +68,18 @@ zig build test       # runs the full unit test suite
 
 Example:
 
-```sh
-cat > hello.zox <<'EOF'
+in your hello.zox file:
+```
+
 class Greeter {
   init(name) { this.name = name; }
   greet() { return "Hello, " + this.name + "!"; }
 }
 var g = Greeter("World");
 print g.greet();
-EOF
+
+
+
 zig build run -- hello.zox
 # Hello, World!
 ```
