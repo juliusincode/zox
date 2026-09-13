@@ -49,6 +49,13 @@ pub const Interpreter = struct {
         };
     }
 
+    /// Register a built-in function in the global environment.
+    pub fn defineNative(self: *Interpreter, name: []const u8, arity: usize, call: *const fn (std.mem.Allocator, []const Value) Value) !void {
+        const native = try self.gpa.create(value_mod.NativeFunction);
+        native.* = .{ .name = name, .arity = arity, .call = call };
+        try self.globals.define(name, .{ .native = native });
+    }
+
     /// Called by the resolver as soon as it knows the lexical depth for a
     /// variable reference.
     pub fn resolve(self: *Interpreter, node_ptr: anytype, depth: usize) std.mem.Allocator.Error!void {
@@ -278,6 +285,14 @@ pub const Interpreter = struct {
             return self.callFunction(function, arguments.items);
         }
 
+        if (callee == .native) {
+            const native = callee.native;
+            if (arguments.items.len != native.arity) {
+                return self.arityError(c.paren, native.arity, arguments.items.len);
+            }
+            return native.call(self.gpa, arguments.items);
+        }
+
         if (callee == .class) {
             const class = callee.class;
             const initializer = class.findMethod("init");
@@ -482,6 +497,10 @@ pub const Interpreter = struct {
                 .function => |bf| af == bf,
                 else => false,
             },
+            .native => |an| return switch (b) {
+                .native => |bn| an == bn,
+                else => false,
+            },
             .class => |ac| return switch (b) {
                 .class => |bc| ac == bc,
                 else => false,
@@ -507,6 +526,7 @@ pub const Interpreter = struct {
             .number => |n| std.debug.print("{d}\n", .{n}),
             .string => |s| std.debug.print("{s}\n", .{s}),
             .function => |f| std.debug.print("<fn {s}>\n", .{f.declaration.name.lexeme}),
+            .native => |n| std.debug.print("<native fn {s}>\n", .{n.name}),
             .class => |cl| std.debug.print("{s}\n", .{cl.name}),
             .instance => |inst| std.debug.print("{s} instance\n", .{inst.class.name}),
         }

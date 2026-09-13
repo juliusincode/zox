@@ -11,6 +11,21 @@ flow, first-class functions with closures, a static resolver, and classes
 with single inheritance. It does not (yet) implement Part III of the book
 (clox, the bytecode VM).
 
+## Features beyond the book baseline
+
+- **Interactive REPL** — run `zox` with no arguments for a line-oriented
+  read-eval-print loop. Each line is resolved and interpreted independently
+  while sharing the same global environment (variables and functions persist
+  across lines). Ctrl-D exits.
+- **Native functions** — `clock()` returns the current Unix time in seconds
+  as a floating-point number (identical semantics to the book's §10.2
+  example). Natives are first-class `Value`s and participate in the same
+  call machinery as user-defined functions.
+- **Process-lifetime arena** — all AST nodes, environments, strings from
+  concatenation, and native wrappers live in a single arena that is freed
+  only on process exit. This eliminates almost all manual `deinit` calls
+  for a short-lived CLI/REPL tool.
+
 ## Why Zig instead of Java?
 
 Zig has no garbage collector, no exceptions, and no inheritance. Every
@@ -29,6 +44,9 @@ rethought:
 - **The resolver's `Map<Expr, Integer>`** (Java, keyed by object identity)
   becomes a plain `AutoHashMap(usize, usize)` keyed by AST node pointer
   addresses in Zig.
+- **Native functions** are a new `Value` tag (`.native`) holding an arity
+  and a function pointer; the call site in the interpreter dispatches on
+  the tag the same way it does for user functions and classes.
 
 ## Project structure
 
@@ -41,65 +59,55 @@ src/
   ast_printer.zig   Debug: prints an Expr as parenthesized Lisp-like notation
   parser.zig        Recursive-descent parser: tokens -> statements
   environment.zig   Variable bindings with lexical scope chaining
-  value.zig         Runtime Value type, LoxFunction, LoxClass, LoxInstance
+  value.zig         Runtime Value type, LoxFunction, NativeFunction,
+                    LoxClass, LoxInstance
   resolver.zig      Static pass: resolves every variable reference to a
                     lexical scope depth before interpretation starts
-  interpreter.zig   Tree-walking evaluator + statement execution
-  main.zig          CLI entry point
+  interpreter.zig   Tree-walking evaluator + statement execution + natives
+  main.zig          CLI entry point (script mode + REPL)
 ```
 
-Roughly this mirrors the book's chapter order (scanning -> parsing ->
-evaluating -> statements/state -> control flow -> functions -> resolving
--> classes), and the codebase grew up chapter by chapter, each stage
-compiled and unit-tested before moving to the next.
+## Building & running
 
-## Building and running
+Requires Zig 0.16.
 
-Requires Zig 0.16.0 (the standard library API — particularly `ArrayList`,
-`std.Io`, and process argument/file access — changed significantly in this
-release; earlier or later Zig versions are not guaranteed to build this
-project unmodified).
-
-```sh
-zig build            # builds ./zig-out/bin/zox
-zig build run -- path/to/script.zox
-zig build test       # runs the full unit test suite
+```bash
+zig build                 # produces zig-out/bin/zox
+zig build run -- script.zox
+zig build test            # unit tests (51 tests)
+./zig-out/bin/zox         # interactive REPL
+./zig-out/bin/zox script.zox
 ```
 
-Example:
+### Quick examples
 
-in your hello.zox file:
-```
-class Greeter {
-  init(name) { this.name = name; }
-  greet() { return "Hello, " + this.name + "!"; }
+```lox
+// script.zox
+print clock();                    // e.g. 1726...
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 2) + fib(n - 1);
 }
-var g = Greeter("World");
-print g.greet();
+print fib(10);                    // 55
 
+class Point {
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  distance() {
+    return this.x * this.x + this.y * this.y;
+  }
+}
+var p = Point(3, 4);
+print p.distance();               // 25
 ```
-in your Terminal:
-```
-zig build run -- hello.zox
-# Hello, World!
-```
 
-## Known limitations / things that are intentionally simple
+In the REPL the same environment is shared across lines, so you can
+define a function on one line and call it on the next.
 
-- **No garbage collector.** Every environment and heap-allocated runtime
-  object lives in one process-lifetime arena. This is correct (nothing is
-  freed too early) but not memory-efficient for long-running programs
-  with many loop iterations or many short-lived closures — each iteration
-  that creates a new closure leaks its environment until the process
-  exits. Fine for a teaching interpreter and short scripts, not fine for
-  a long-running service.
-- **No native/foreign functions** (no `clock()` or similar) — only what
-  the Lox grammar itself provides.
-- **Exit codes** follow the book's convention: `64` for CLI usage errors,
-  `65` for a parse/resolve error, `70` for an uncaught runtime error.
+## Status
 
-## License
-
-MIT — see [LICENSE](LICENSE). The Lox language itself and its design are
-Robert Nystrom's; this is an independent implementation written for
-learning purposes.
+Complete tree-walking implementation of jlox (Part II of the book) plus
+REPL and the `clock` native. A bytecode VM (clox / Part III) is future
+work.

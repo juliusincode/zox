@@ -16,6 +16,7 @@ pub const Value = union(enum) {
     boolean: bool,
     nil,
     function: *LoxFunction,
+    native: *NativeFunction,
     class: *LoxClass,
     instance: *LoxInstance,
 
@@ -41,6 +42,15 @@ pub const LoxFunction = struct {
     /// simply reaching the end of the body) yields `this` instead of
     /// `nil`, so that `SomeClass(...)` always returns the new instance.
     is_initializer: bool = false,
+};
+
+/// Built-in / native function. `call` receives the interpreter's allocator
+/// (for any temporary values it may need) and the already-evaluated
+/// argument list. Arity is checked by the call site before invoking.
+pub const NativeFunction = struct {
+    name: []const u8,
+    arity: usize,
+    call: *const fn (gpa: std.mem.Allocator, args: []const Value) Value,
 };
 
 /// A class at runtime: name, optional superclass, and its own (not
