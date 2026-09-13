@@ -70,7 +70,6 @@ Example:
 
 in your hello.zox file:
 ```
-
 class Greeter {
   init(name) { this.name = name; }
   greet() { return "Hello, " + this.name + "!"; }
@@ -78,8 +77,9 @@ class Greeter {
 var g = Greeter("World");
 print g.greet();
 
-
-
+```
+in your Terminal:
+```
 zig build run -- hello.zox
 # Hello, World!
 ```
