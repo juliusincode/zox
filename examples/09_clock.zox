@@ -1,0 +1,16 @@
+// Native function clock()
+print "Current Unix time:";
+print clock();
+
+fun timeIt() {
+  var start = clock();
+  // busy work
+  var i = 0;
+  while (i < 100000) {
+    i = i + 1;
+  }
+  var end = clock();
+  print "loop took approx seconds:";
+  print end - start;
+}
+timeIt();

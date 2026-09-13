@@ -1,0 +1,17 @@
+// Closures – each counter has independent state
+fun makeCounter() {
+  var i = 0;
+  fun counter() {
+    i = i + 1;
+    return i;
+  }
+  return counter;
+}
+
+var c1 = makeCounter();
+var c2 = makeCounter();
+
+print c1();               // 1
+print c1();               // 2
+print c2();               // 1
+print c1();               // 3

@@ -1,0 +1,20 @@
+// Inheritance and super
+class Animal {
+  speak() {
+    print "???";
+  }
+}
+
+class Dog < Animal {
+  speak() {
+    print "woof";
+  }
+
+  parentSpeak() {
+    super.speak();
+  }
+}
+
+var d = Dog();
+d.speak();                 // woof
+d.parentSpeak();           // ???

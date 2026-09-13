@@ -1,0 +1,5 @@
+// Basic print and literals
+print "Hello, zox!";
+print 42;
+print true;
+print nil;

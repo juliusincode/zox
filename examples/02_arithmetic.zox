@@ -1,0 +1,8 @@
+// Arithmetic and string concatenation
+print 1 + 2 * 3;          // 7
+print (1 + 2) * 3;        // 9
+print 10 / 2 - 1;         // 4
+print 2 + 2 == 4;         // true
+print "Hello, " + "world!";
+print !"false";           // false (bang on truthy string)
+print -5 + 10;            // 5

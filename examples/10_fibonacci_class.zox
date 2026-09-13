@@ -1,0 +1,18 @@
+// Combined: class + recursion + closures + clock
+class Fibonacci {
+  init() {
+    this.cache = 0;   // just a dummy field to show state
+  }
+
+  compute(n) {
+    if (n < 2) return n;
+    return this.compute(n - 1) + this.compute(n - 2);
+  }
+}
+
+var fib = Fibonacci();
+print "fib(10) =";
+print fib.compute(10);    // 55
+
+print "started at";
+print clock();

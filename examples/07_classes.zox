@@ -1,0 +1,23 @@
+// Classes, methods, this, init
+class Point {
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  distanceSquared() {
+    return this.x * this.x + this.y * this.y;
+  }
+
+  move(dx, dy) {
+    this.x = this.x + dx;
+    this.y = this.y + dy;
+    return this;
+  }
+}
+
+var p = Point(3, 4);
+print p.distanceSquared(); // 25
+p.move(1, 1);
+print p.x;                 // 4
+print p.y;                 // 5
